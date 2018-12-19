@@ -1,0 +1,21 @@
+aws rds create-db-instance \
+  --db-name commondb \
+  --db-instance-identifier commondb-instance \
+  --allocated-storage 10 \
+  --db-instance-class db.t2.micro \
+  --engine mysql \
+  --master-username root \
+  --master-user-password password \
+  --availability-zone us-east-1a \
+  --backup-retention-period 0 \
+  --no-multi-az \
+  --publicly-accessible \
+  --storage-type gp2
+
+aws rds authorize-db-security-group-ingress \
+  --ec2-security-group-id sg-f17c968d
+  --cidrip 73.163.222.150/32
+
+aws ec2 update-security-group-rule-descriptions-ingress \
+  --group-id sg-f17c968d \
+  --ip-permissions '[{"IpProtocol": "tcp", "FromPort": 3306, "ToPort": 3306, "IpRanges": [{"CidrIp": "73.163.222.150/32", "Description": "Mysql access from MAC"}]}]'
