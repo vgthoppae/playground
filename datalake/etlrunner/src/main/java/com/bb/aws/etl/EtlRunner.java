@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +29,12 @@ public class EtlRunner implements RequestHandler<S3Event, String> {
     private static final Logger log = LogManager.getLogger(EtlRunner.class);
 
     private static final String ACTIVITY_ARN = "arn:aws:states:us-east-1:210886440596:activity:PatientFinderActivity";
+
+    private static final Map<String, String> ACTIVITY_ARN_MAP = new HashMap<String, String>();
+
+    static {
+        ACTIVITY_ARN_MAP.put("external/dummy.txt", "arn:aws:states:us-east-1:210886440596:activity:ReceiveIDRExtractActivity");
+    }
 
     public String handleRequest(S3Event input, Context context) {
         try {
@@ -40,6 +47,12 @@ public class EtlRunner implements RequestHandler<S3Event, String> {
             String eventName = record.getEventName();
 
             log.info("Event {} on {}", eventName, srcFileName);
+
+            if (!ACTIVITY_ARN_MAP.containsKey(srcFileName)) {
+                log.info("No runner configured for key {}", srcFileName);
+            } else {
+                String activity_arn = ACTIVITY_ARN_MAP.get(srcFileName);
+            }
 
             return "success";
         } catch (Exception e) {
@@ -71,8 +84,7 @@ public class EtlRunner implements RequestHandler<S3Event, String> {
         return "{\"Hello\": \"" + who + "\"}";
     }
 
-    public static void main(final String[] EtlRunner) throws Exception {
-        EtlRunner greeterActivities = new EtlRunner();
+    private void performActivity(String activity_arn) throws Exception {
         ClientConfiguration clientConfiguration = new ClientConfiguration();
         clientConfiguration.setSocketTimeout((int)TimeUnit.SECONDS.toMillis(70));
 
