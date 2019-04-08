@@ -1,0 +1,33 @@
+aws glue create-dev-endpoint \
+   --endpoint-name dev-ep-vpc \
+   --role-arn arn:aws:iam::xx:role/DefaultGlueServiceRole \
+   --security-group-ids sg-0dfd151aef7d19438 \
+   --subnet-id subnet-09244952 \
+   --number-of-nodes 2 \
+   --public-keys "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCiGMfZr8v0jU54wa9eWbzoXWgIWwJBxWfTE/q0e6hXLL5O7dpfnBmQzV05X3RK4oFWcHTu1lC8Zu1Gyx6NdNe3+Hus1Qb9gyYS/kY0mAGfbO6s4r0V/UsthudCEQx65FRXsuoLCuaX/LRrmp7e1gr8o4m6Sshiq90uQi4SM2HIZTnPwfxjtB3fu23p/Y2jP8qQ6T1DsZGjF0hW/5Ih3YqlHRih/4HfnggBIYA8fSMgJLYqxAzIGdZHu2E/lSsOq2z8TRd+khwveVb5OTpD3bXJWU1XpKuGhEaIcFkvUN1BA70N8313xIucML+rj3IDYJDSAveQhwyIEVs/TsRqkuLf vgthoppae@Vs-MacBook-Pro"
+
+aws glue create-dev-endpoint \
+   --endpoint-name dev-ep \
+   --role-arn arn:aws:iam::210886440596:role/DefaultGlueServiceRole \
+   --number-of-nodes 2 \
+   --public-keys "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCiGMfZr8v0jU54wa9eWbzoXWgIWwJBxWfTE/q0e6hXLL5O7dpfnBmQzV05X3RK4oFWcHTu1lC8Zu1Gyx6NdNe3+Hus1Qb9gyYS/kY0mAGfbO6s4r0V/UsthudCEQx65FRXsuoLCuaX/LRrmp7e1gr8o4m6Sshiq90uQi4SM2HIZTnPwfxjtB3fu23p/Y2jP8qQ6T1DsZGjF0hW/5Ih3YqlHRih/4HfnggBIYA8fSMgJLYqxAzIGdZHu2E/lSsOq2z8TRd+khwveVb5OTpD3bXJWU1XpKuGhEaIcFkvUN1BA70N8313xIucML+rj3IDYJDSAveQhwyIEVs/TsRqkuLf vgthoppae@Vs-MacBook-Pro"
+
+
+aws glue  get-dev-endpoint \
+    --endpoint-name dev-ep-vpc
+
+aws ec2 describe-network-interfaces \
+    --filters Name=private-dns-name,Values=ip-172-31-28-57.ec2.internal
+
+aws ec2 allocate-address
+
+aws ec2 associate-address \
+    --allocation-id eipalloc-09ab6909a40c847ba \
+    --network-interface-id eni-0ff29e67dab0ec051
+
+ssh -i ~/.ssh/id_rsa -nNT -g -R :9001:localhost:9001 glue@3.211.33.254
+ssh -i ~/.ssh/id_rsa -NTL 9007:169.254.76.1:9007 glue@54.159.138.213
+
+ssh -i ~/.ssh/id_rsa \
+    glue@3.211.33.254 \
+    -t gluepython /home/glue/scripts/medley/main.py

@@ -103,7 +103,7 @@ public class EtlRunner implements RequestHandler<S3Event, String> {
                 try {
                     JsonNode json = Jackson.jsonNodeOf(getActivityTaskResult.getInput());
                     String greetingResult =
-                            greeterActivities.getGreeting(json.get("who").textValue());
+                            getGreeting(json.get("who").textValue());
                     client.sendTaskSuccess(
                             new SendTaskSuccessRequest().withOutput(
                                     greetingResult).withTaskToken(getActivityTaskResult.getTaskToken()));
