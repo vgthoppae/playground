@@ -80,6 +80,9 @@ public class EtlRunner implements RequestHandler<S3Event, String> {
             if (getActivityTaskResult.getTaskToken() != null) {
                 try {
                     String result = "File is received";
+                    JsonNode json = Jackson.jsonNodeOf(getActivityTaskResult.getInput());
+                    String greetingResult =
+                            getGreeting(json.get("who").textValue());
                     client.sendTaskSuccess(
                             new SendTaskSuccessRequest().withOutput(
                                     makeJson(result)).withTaskToken(getActivityTaskResult.getTaskToken()));
