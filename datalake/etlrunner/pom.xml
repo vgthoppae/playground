@@ -11,6 +11,12 @@
     <dependencies>
         <dependency>
             <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-glue</artifactId>
+            <version>LATEST</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-stepfunctions</artifactId>
             <version>LATEST</version>
         </dependency>

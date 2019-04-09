@@ -28,8 +28,6 @@ public class EtlRunner implements RequestHandler<S3Event, String> {
 
     private static final Logger log = LogManager.getLogger(EtlRunner.class);
 
-    private static final String ACTIVITY_ARN = "arn:aws:states:us-east-1:210886440596:activity:PatientFinderActivity";
-
     private static final Map<String, String> ACTIVITY_ARN_MAP = new HashMap<String, String>();
 
     static {
@@ -52,8 +50,10 @@ public class EtlRunner implements RequestHandler<S3Event, String> {
                 log.info("No runner configured for key {}", srcFileName);
             } else {
                 String activity_arn = ACTIVITY_ARN_MAP.get(srcFileName);
+                log.info("Notifying activity {}", activity_arn);
+                performActivity(activity_arn);
+                log.info("Acitivity {} completed", activity_arn);
             }
-
             return "success";
         } catch (Exception e) {
             log.error(e);
@@ -62,62 +62,42 @@ public class EtlRunner implements RequestHandler<S3Event, String> {
         return null;
     }
 
-    public void logMapRecursively(Object entry) {
-        if (entry instanceof Map) {
-            Map<String, Object> mapEntry = (Map<String, Object>) entry;
-            Set<String> keySet = mapEntry.keySet();
-            for(String key:keySet) {
-                log.info("Key is:" + key);
-                Object subEntry = mapEntry.get(key);
-                if (subEntry instanceof Map) {
-                    log.info("****Traversing inside map...");
-                    logMapRecursively(subEntry);
-                    log.info("*******...");
-                } else {
-                    log.info("Value is:" + subEntry);
-                }
-            }
-        }
-    }
-
-    public String getGreeting(String who) throws Exception {
-        return "{\"Hello\": \"" + who + "\"}";
+    public String makeJson(String result) throws Exception {
+        return "{\"Result\": \"" + result + "\"}";
     }
 
     private void performActivity(String activity_arn) throws Exception {
         ClientConfiguration clientConfiguration = new ClientConfiguration();
         clientConfiguration.setSocketTimeout((int)TimeUnit.SECONDS.toMillis(70));
 
-        AWSStepFunctions client = AWSStepFunctionsClientBuilder.standard()
-                .withRegion(Regions.US_EAST_1)
-                .withCredentials(new EnvironmentVariableCredentialsProvider())
-                .withClientConfiguration(clientConfiguration)
-                .build();
+        AWSStepFunctions client = AWSStepFunctionsClientBuilder.defaultClient();
 
         while (true) {
             GetActivityTaskResult getActivityTaskResult =
                     client.getActivityTask(
-                            new GetActivityTaskRequest().withActivityArn(ACTIVITY_ARN));
+                            new GetActivityTaskRequest().withActivityArn(activity_arn));
 
             if (getActivityTaskResult.getTaskToken() != null) {
                 try {
+                    String result = "File is received";
                     JsonNode json = Jackson.jsonNodeOf(getActivityTaskResult.getInput());
                     String greetingResult =
                             getGreeting(json.get("who").textValue());
                     client.sendTaskSuccess(
                             new SendTaskSuccessRequest().withOutput(
-                                    greetingResult).withTaskToken(getActivityTaskResult.getTaskToken()));
-                    System.out.println("Execution complete......");
+                                    makeJson(result)).withTaskToken(getActivityTaskResult.getTaskToken()));
+                    log.info("Activity Task execution complete......");
                     return;
                 } catch (Exception e) {
                     client.sendTaskFailure(new SendTaskFailureRequest().withTaskToken(
                             getActivityTaskResult.getTaskToken()));
-                    e.printStackTrace();
-                    System.err.println("Execution failed......");
+                    log.error("Activity Task execution failed......");
+                    log.error(e);
                     return;
                 }
             } else {
-                Thread.sleep(1000);
+                log.info("Activy {} is not available - will try again in 5 seconds", activity_arn);
+                Thread.sleep(5000);
             }
         }
     }
