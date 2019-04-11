@@ -25,9 +25,9 @@ aws ec2 associate-address \
     --allocation-id eipalloc-09ab6909a40c847ba \
     --network-interface-id eni-0ff29e67dab0ec051
 
-ssh -i ~/.ssh/id_rsa -nNT -g -R :9001:localhost:9001 glue@3.211.33.254
+ssh -i ~/.ssh/id_rsa -nNT -g -R :9001:localhost:9001 glue@ec2-3-80-40-136.compute-1.amazonaws.com
 ssh -i ~/.ssh/id_rsa -NTL 9007:169.254.76.1:9007 glue@54.159.138.213
 
 ssh -i ~/.ssh/id_rsa \
-    glue@3.211.33.254 \
-    -t gluepython /home/glue/scripts/medley/main.py
+    glue@ec2-3-80-40-136.compute-1.amazonaws.com \
+    -t gluepython /home/glue/scripts/medley/dvdrental.py
