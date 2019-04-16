@@ -1,5 +1,7 @@
 package com.bb.aws.etl;
 
+import com.amazonaws.services.lambda.AWSLambdaClientBuilder;
+import com.amazonaws.services.lambda.invoke.LambdaInvokerFactory;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.s3.event.S3EventNotification;
@@ -15,6 +17,11 @@ public class RedS3Poller implements RequestHandler<String, String> {
 
     private final static String RED_S3_LOC = "s3://serverlessdatalakepocforeqrs/red/dvdrental/";
     private final static String queueName = "dvds3queue";
+    private final static String rentalPrefix = "red/dvdrental/public/rental/";
+    private final static String paymentPrefix = "red/dvdrental/public/payment/";
+    private final static String customerPrefix = "red/dvdrental/public/customer/";
+    private final static String GREEN_S3_LOC = "s3://serverlessdatalakepocforeqrs/green/dvdrental/";
+
 
     public String handleRequest(String s, Context context) {
         final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
@@ -31,14 +38,35 @@ public class RedS3Poller implements RequestHandler<String, String> {
                 deleteMessages(sqs, queueUrl, receiptHandles);
                 messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
             }
-            for(String key:keys) {
-                System.out.println("Acquired the key:" + key);
-            }
+            callGlue(keys);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         return "done";
+    }
+
+    private void callGlue(List<String> keys) {
+        GlueJobContext context = new GlueJobContext();
+        for(String key:keys) {
+            System.out.println("Acquired the key:" + key);
+            if (key.startsWith(rentalPrefix)) {
+                context.setRentalFileLoc(key);
+            } else if (key.startsWith(customerPrefix)) {
+                context.setCustomerFileLoc(key);
+            } else if (key.startsWith(paymentPrefix)) {
+                context.setPaymentFileLoc(key);
+            } else {
+                System.out.println("No matching key found for " + key);
+            }
+        }
+        context.setS3OutputLoc(GREEN_S3_LOC);
+
+        final GlueClient glueClient = LambdaInvokerFactory.builder()
+                .lambdaClient(AWSLambdaClientBuilder.defaultClient())
+                .build(GlueClient.class);
+
+        glueClient.run(context);
     }
 
     private List<String>  processMessages(List<Message> messages, List<String> keys) {
