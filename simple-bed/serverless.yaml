@@ -1,0 +1,21 @@
+service: simple-bed
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+  environment:
+    NODE_PATH: './:/opt/node_modules'
+
+custom:
+  common_layer_arn: 'arn:aws:lambda:#{AWS::Region}:#{AWS::AccountId}:layer:dev-dxt-common-modules-layer:1'
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline
+  - serverless-pseudo-parameters
+
+functions:
+  headerConsumer:
+    handler: src/entry.handler
+    layers:
+      - ${self:custom.common_layer_arn}

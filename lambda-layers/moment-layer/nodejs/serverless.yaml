@@ -1,0 +1,17 @@
+service: dxt-common-modules-layer
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+
+layers:
+  commonmodules:
+    name: ${self:provider.stage}-dxt-common-modules-layer
+    description: DXT Common Modules layer
+    package:
+      artifact: common_modules.zip
+
+
+
+
+

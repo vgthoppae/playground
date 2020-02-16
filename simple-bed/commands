@@ -1,0 +1,8 @@
+curl -X POST \
+  http://localhost:3000/1/functions/simple-bed-dev-headerConsumer/invocations \
+  -H 'Cache-Control: no-cache' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "some-key": "some-value",
+    "other-key": false
+}'
