@@ -1,0 +1,78 @@
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Cloudera Installation template
+Parameters:
+  CreateSelectiveServers:
+    Description: Selective Servers to be created
+    Default: all
+    Type: String
+    AllowedValues: 
+      - all
+      - database
+    ConstraintDescription: must specify one of the above.  
+Conditions:
+  CreateDBServer: !Equals [ !Ref CreateSelectiveServers, database ]
+  CreateAllServers: !Equals [ !Ref CreateSelectiveServers, all ]
+
+Resources:
+  ClouderaManagerEC2Instance: 
+    Type: "AWS::EC2::Instance"
+    Condition: CreateAllServers
+    Properties: 
+      ImageId: "ami-9887c6e7" #CentOS 7 (x86_64) - with Updates HVM
+      InstanceType: t2.micro
+      KeyName: sbabswebserver-ami-key
+      BlockDeviceMappings:
+        -
+          DeviceName: /dev/sda1
+          Ebs:
+            VolumeType: io1
+            Iops: 200
+            DeleteOnTermination: true
+            VolumeSize: 8
+      Tags:
+        - Key: Name
+          Value: Cloudera-Manager-Server
+        - Key: Application Id
+          Value: Cloudera
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          yum update -y
+          yum install -y wget
+          wget https://archive.cloudera.com/cm5/redhat/7/x86_64/cm/cloudera-manager.repo -P /etc/yum.repos.d
+          rpm --import https://archive.cloudera.com/cm5/redhat/7/x86_64/cm/RPM-GPG-KEY-cloudera
+          yum install -y oracle-j2sdk1.7
+          yum install -y cloudera-manager-daemons cloudera-manager-server
+
+
+  ClouderaDatabaseEC2Instance:
+    Type: "AWS::EC2::Instance"
+    Condition: CreateDBServer
+    Properties: 
+      ImageId: "ami-9887c6e7" #CentOS 7 (x86_64) - with Updates HVM
+      InstanceType: t2.micro
+      KeyName: sbabswebserver-ami-key
+      BlockDeviceMappings:
+        -
+          DeviceName: /dev/sda1
+          Ebs:
+            VolumeType: io1
+            Iops: 200
+            DeleteOnTermination: true
+            VolumeSize: 8
+      Tags:
+        - Key: Name
+          Value: Cloudera-Database
+        - Key: Application Id
+          Value: Cloudera
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          yum update -y
+          yum install -y wget
+          wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
+          rpm -ivh mysql-community-release-el7-5.noarch.rpm 
+          yum install -y mysql-server
+          systemctl start mysqld
+          systemctl enable mysqld

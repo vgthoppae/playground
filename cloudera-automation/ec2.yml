@@ -1,0 +1,23 @@
+- hosts: localhost #run the script on the controller host
+  gather_facts: false
+
+  tasks:
+    - name: Create/Terminate an ec2
+      ec2:
+        key_name: xxxxx
+        instance_type: t2.micro
+        image: ami-4fffc834
+        wait: yes
+        group: default
+        count: 1
+        vpc_subnet_id: subnet-xxxx
+        assign_public_ip: yes
+        state: '{{state}}'
+        region: us-east-1
+        # volumes:
+        #   - device_name: /dev/sdb
+        #     volume_type: gp2
+        #     volume_size: 10
+        #     delete_on_termination: true
+        instance_tags:
+          Name: simple-ec2-lambda-ami
