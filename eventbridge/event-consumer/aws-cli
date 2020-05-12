@@ -1,0 +1,5 @@
+aws2 lambda add-permission --statement-id "TrustCWEToInvokeMyLambdaFunction" \
+--action "lambda:InvokeFunction" \
+--principal "events.amazonaws.com" \
+--function-name "arn:aws:lambda:us-east-1:210886440596:function:event-consumer-dev-default" \
+--source-arn "arn:aws:events:us-east-1:210886440596:rule/s3-put"
